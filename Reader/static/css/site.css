@@ -78,3 +78,163 @@ a:hover {
 .blurry {
     backdrop-filter: blur(10px);
 }
+
+:root {
+    --frame-blur-radius: 5px;
+    --frame-shadow-color: rgba(0, 0, 0, 0.3); /* Adjusted shadow color for subtlety */
+    --frame-padding: 15px; /* Thickness of the 'frame' */
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Prevent scrollbars on body due to padding */
+}
+
+body {
+    /* background-color: #0a0a0a; */ /* BaseLayout sets MudThemeProvider IsDarkMode=true, so body bg will be dark. Or use a MudBlazor variable. */
+    padding: var(--frame-padding);
+    box-sizing: border-box; /* Important for padding calculation */
+    position: relative; /* Needed for the ::before pseudo-element to position correctly */
+}
+
+/* Blurred background effect for the 'frame' area */
+body::before {
+    content: '';
+    position: fixed; /* Cover the entire viewport */
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--mud-palette-background); /* Use MudBlazor's background color for the blur source */
+    /* Or inherit, but MudBlazor theme might be more specific */
+    filter: blur(var(--frame-blur-radius));
+    z-index: -2; /* Deepest background layer */
+    /* Ensure the padding area of the body isn't blurred by making this pseudo-element slightly larger if needed,
+       or by ensuring the .app-content-wrapper background is opaque. */
+    margin: calc(-1 * var(--frame-padding)); /* Extend out to cover the true viewport edges if body has padding */
+
+}
+
+.app-content-wrapper {
+    width: 100%;
+    height: 100%;
+    background-color: var(--mud-palette-surface); /* Use MudBlazor's surface color for the actual content background */
+    box-shadow: 0 0 15px 5px var(--frame-shadow-color);
+    overflow: hidden; /* Changed from auto to hidden to prevent double scrollbars, .mud-main-content will scroll */
+    position: relative; 
+    z-index: 0; /* Above body's pseudo-element, but below dialogs etc. */
+    display: flex; /* To make MudLayout behave correctly */
+    flex-direction: column; /* To make MudLayout behave correctly */
+}
+
+.app-content-wrapper .mud-layout {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.app-content-wrapper .mud-main-content {
+    flex-grow: 1;
+    overflow-y: auto; /* Scroll within main content if it overflows */
+}
+
+/* Optional: Ensure MudDialogs and other popups are above the frame effect.
+   MudBlazor usually handles z-indexes well, but if issues arise, these can be used.
+.mud-dialog-provider .mud-overlay-root, .mud-dialog-container {
+    z-index: 1301 !important; 
+}
+.mud-snackbar-provider {
+    z-index: 1401 !important;
+}
+*/
+
+.light-flow-border {
+    position: absolute;
+    background: linear-gradient(90deg, transparent, var(--mud-palette-primary-text), var(--mud-palette-primary-text), transparent); /* Adjusted gradient for more solid light */
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    z-index: 1; /* On top of app-content-wrapper's direct surface, but below popups */
+    pointer-events: none; /* So they don't interfere with mouse events */
+}
+
+.light-flow-top {
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px; /* Thickness of the light bar */
+    transform: translateX(-100%); /* Start off-screen */
+}
+
+.light-flow-right {
+    top: 0;
+    right: 0;
+    width: 2px;
+    height: 100%;
+    transform: translateY(-100%); /* Start off-screen */
+}
+
+.light-flow-bottom {
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    transform: translateX(100%); /* Start off-screen, opposite of top */
+}
+
+.light-flow-left {
+    top: 0;
+    left: 0;
+    width: 2px;
+    height: 100%;
+    transform: translateY(100%); /* Start off-screen, opposite of right */
+}
+
+/* Keyframe animations */
+@keyframes lightFlowHorizontal {
+    0% { transform: translateX(-100%); opacity: 0.5; }
+    50% { transform: translateX(0%); opacity: 1; }
+    100% { transform: translateX(100%); opacity: 0.5;}
+}
+
+@keyframes lightFlowVertical {
+    0% { transform: translateY(-100%); opacity: 0.5; }
+    50% { transform: translateY(0%); opacity: 1; }
+    100% { transform: translateY(100%); opacity: 0.5; }
+}
+
+/* Reverse Keyframe animations for bottom/left if a continuous loop is desired */
+@keyframes lightFlowHorizontalReverse {
+    0% { transform: translateX(100%); opacity: 0.5; }
+    50% { transform: translateX(0%); opacity: 1; }
+    100% { transform: translateX(-100%); opacity: 0.5;}
+}
+
+@keyframes lightFlowVerticalReverse {
+    0% { transform: translateY(100%); opacity: 0.5; }
+    50% { transform: translateY(0%); opacity: 1; }
+    100% { transform: translateY(-100%); opacity: 0.5; }
+}
+
+/* Active state - applied to .app-content-wrapper */
+.app-content-wrapper.light-flow-active .light-flow-border {
+    opacity: 0.8; /* Make them visible when active */
+}
+
+.app-content-wrapper.light-flow-active .light-flow-top {
+    animation: lightFlowHorizontal 2.5s ease-in-out infinite;
+}
+
+.app-content-wrapper.light-flow-active .light-flow-right {
+    animation: lightFlowVertical 2.5s ease-in-out infinite;
+    animation-delay: 0.625s; /* 1/4 of duration */
+}
+
+.app-content-wrapper.light-flow-active .light-flow-bottom {
+    animation: lightFlowHorizontalReverse 2.5s ease-in-out infinite;
+     animation-delay: 1.25s; /* 2/4 of duration */
+}
+
+.app-content-wrapper.light-flow-active .light-flow-left {
+    animation: lightFlowVerticalReverse 2.5s ease-in-out infinite;
+    animation-delay: 1.875s; /* 3/4 of duration */
+}

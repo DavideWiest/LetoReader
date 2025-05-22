@@ -29,6 +29,8 @@
 @inject IHttpContextAccessor httpContextAccessor
 @inject ILocalStorageService LocalStorage
 @inject HotKeys HotKeys
+@inject LoadingStateService LoadingService // Added LoadingStateService
+@inject AIService AIService // Added AIService injection
 
 @if (SetPageTitle)
 {
@@ -209,7 +211,9 @@
                 JSRuntime,
                 Snackbar
             ),
-        LocalStorage
+            LocalStorage,
+            AIService, // Pass AIService
+            LoadingService // Pass LoadingStateService
         );
 
         await ReaderContext.TriggerOnInitializedEvents();
@@ -341,7 +345,7 @@
     private async Task HandleFileUpload(IReadOnlyList<IBrowserFile> files)
     {
         await Log.Information("ReaderPlatform: HandleFileUpload");
-
+        LoadingService.ShowLoading("Extracting file content...");
         try
         {
             (ReaderState state, string content) = await FileImporter.ExtractFromBrowserFiles(files);
@@ -352,12 +356,16 @@
             Snackbar.Add(e.Message, Severity.Error);
             await Log.Information("ReaderPlatform: HandleFileUpload - UnsupportedOperationException {error}, {stack}", e.Message, e.StackTrace ?? "No trace");
         }
+        finally
+        {
+            LoadingService.HideLoading();
+        }
     }
 
     private async Task SubmitScrapingForm()
     {
         await Log.Information("ReaderPlatform: SubmitScrapingForm");
-
+        LoadingService.ShowLoading("Scraping website...");
         try
         {
             await ReaderContext.StateManager.AddState(await ReaderState.Scrape(ScrapeInputs));
@@ -367,12 +375,16 @@
             Snackbar.Add(e.Message, Severity.Error);
             await Log.Information("ReaderPlatform: SubmitScrapingForm - ScrapingException {error}, {stack}", e.Message, e.StackTrace ?? "No trace");
         }
+        finally
+        {
+            LoadingService.HideLoading();
+        }
     }
 
     private async Task HandleFromClipboard()
     {
         await Log.Information("ReaderPlatform: HandleFromClipboard");
-
+        LoadingService.ShowLoading("Processing clipboard text...");
         try
         {
             var clipboardText = await JSRuntime.InvokeAsync<string>("getClipboardContent");

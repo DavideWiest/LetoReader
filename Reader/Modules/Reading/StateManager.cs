@@ -26,14 +26,16 @@ public class StateManager
     public string CurrentText { get => _currentText; set => _currentText = value.Trim(); }
     private SiteInteraction siteInteraction;
     private Func<Task> TextHasChanged;
-    private readonly AIService _aiService; // Added AIService field
+    private readonly AIService _aiService;
+    private readonly LoadingStateService _loadingService; // Added LoadingStateService field
 
-    public StateManager(ILocalStorageService localStorage, SiteInteraction site, Func<Task> updateFieldsFunc, AIService aiService) // Added AIService parameter
+    public StateManager(ILocalStorageService localStorage, SiteInteraction site, Func<Task> updateFieldsFunc, AIService aiService, LoadingStateService loadingService) // Added LoadingStateService parameter
     {
         this.localStorage = localStorage;
         siteInteraction = site;
         TextHasChanged = updateFieldsFunc;
-        _aiService = aiService; // Assign AIService
+        _aiService = aiService;
+        _loadingService = loadingService; // Assign LoadingStateService
     }
 
     public async Task SaveStates()
@@ -72,6 +74,7 @@ public class StateManager
         // AI Service Integration
         if (_aiService != null)
         {
+            _loadingService.ShowLoading("Analyzing text with AI...");
             try
             {
                 var aiResult = await _aiService.GetAnalysisAsync(content);
@@ -88,8 +91,11 @@ public class StateManager
             }
             catch (Exception ex)
             {
-                await Log.Error($"ReaderContext: Error during AI analysis for '{state.Title}'. AISummary and AIKeywords will not be populated.", ex.Message, ex.StackTrace);
-                // Optionally, decide if you want to re-throw or handle specific AI exceptions differently
+                await Log.Error($"ReaderContext: Error during AI analysis for '{state.Title}'. AISummary and AIKeywords will not be populated.", ex.Message, ex.StackTrace ?? string.Empty);
+            }
+            finally
+            {
+                _loadingService.HideLoading();
             }
         }
         else

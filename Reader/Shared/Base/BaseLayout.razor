@@ -1,10 +1,13 @@
 ﻿@namespace Reader.Shared.BaseUI
 
 @inherits LayoutComponentBase
+@implements IDisposable
 
 @using Reader.Data.Storage
 @using Reader.Shared.Layout
 @using MudBlazor
+@using Reader.Modules // Added for LoadingStateService
+@inject LoadingStateService LoadingService
 
 <MudThemeProvider IsDarkMode="@(true)" Theme="CustomDarkTheme" />
 <MudDialogProvider />
@@ -14,17 +17,42 @@
 
 
 
-<MudLayout>
-    <Navbar />
-    <MudMainContent>
-        @Body
-    </MudMainContent>
-    <Footer />
-    <SubFooter />
-</MudLayout>
+<div class="app-content-wrapper @(isLoading ? "light-flow-active" : "")">
+    <div class="light-flow-border light-flow-top"></div>
+    <div class="light-flow-border light-flow-right"></div>
+    <div class="light-flow-border light-flow-bottom"></div>
+    <div class="light-flow-border light-flow-left"></div>
+    <MudLayout>
+        <Navbar />
+        <MudMainContent Class="pa-0 ma-0"> 
+            @Body
+        </MudMainContent>
+        <Footer />
+        <SubFooter />
+    </MudLayout>
+</div>
 
 
 @code {
+    private bool isLoading = false;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized(); 
+        LoadingService.OnLoadingStateChanged += HandleLoadingStateChanged;
+        isLoading = LoadingService.IsLoading; // Set initial state
+    }
+
+    private void HandleLoadingStateChanged()
+    {
+        isLoading = LoadingService.IsLoading;
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        LoadingService.OnLoadingStateChanged -= HandleLoadingStateChanged;
+    }
 
     MudTheme CustomDarkTheme = new MudTheme()
         {

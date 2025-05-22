@@ -101,6 +101,7 @@ builder.Services.AddSingleton<BaseUIStorage>();
 builder.Services.AddScoped<LoggingMiddleware>();
 builder.Services.AddScoped<AppConfig>();
 builder.Services.AddScoped<AIService>();
+builder.Services.AddSingleton<LoadingStateService>();
 
 // prevents 404 when switching environments - see https://github.com/MudBlazor/Templates/commit/62e13c61058b419b8957f7d19f38c69a70ef50e6
 StaticWebAssetsLoader.UseStaticWebAssets(builder.Environment, builder.Configuration);

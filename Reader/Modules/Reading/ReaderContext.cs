@@ -27,12 +27,16 @@ public class ReaderContext
     private SiteInteraction SiteInteraction { get; set; }
 
     private ILocalStorageService localStorage = default!;
+    private AIService aiService = default!; // Added
+    private LoadingStateService loadingService = default!; // Added
 
-    public ReaderContext(SiteInteraction siteInteraction, ILocalStorageService localStorage)
+    public ReaderContext(SiteInteraction siteInteraction, ILocalStorageService localStorage, AIService aiService, LoadingStateService loadingService) // Modified constructor
     {
         SiteInteraction = siteInteraction;
         this.localStorage = localStorage;
-        StateManager = new StateManager(localStorage, siteInteraction, HandleSelectedReaderStateChanged);
+        this.aiService = aiService; // Added
+        this.loadingService = loadingService; // Added
+        StateManager = new StateManager(localStorage, siteInteraction, HandleSelectedReaderStateChanged, this.aiService, this.loadingService); // Modified instantiation
     }
 
     public async Task TriggerOnInitializedEvents()
