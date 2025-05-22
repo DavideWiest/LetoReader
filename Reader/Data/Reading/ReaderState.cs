@@ -21,6 +21,8 @@ public class ReaderState
     public DateTime LastRead;
     public ReaderStateSource Source;
     public string? SourceDescription;
+    public string? AISummary { get; set; }
+    public string? AIKeywords { get; set; }
 
     public ReaderState(string title, string text,ReaderStateSource source, string? sourceDescription = null, DateTime? lastRead = null, PositionalMethod positionalMethod = PositionalMethod.Word)
     {

@@ -12,6 +12,7 @@ using Reader.Modules.Logging;
 using Reader.Modules.Middleware;
 using Reader.Data.Storage;
 using Reader.Data;
+using Reader.Modules;
 using Newtonsoft.Json;
 using Reader.Data.Reading;
 using Microsoft.AspNetCore.ResponseCompression;
@@ -99,6 +100,7 @@ builder.Services.AddSingleton<Constants>();
 builder.Services.AddSingleton<BaseUIStorage>();
 builder.Services.AddScoped<LoggingMiddleware>();
 builder.Services.AddScoped<AppConfig>();
+builder.Services.AddScoped<AIService>();
 
 // prevents 404 when switching environments - see https://github.com/MudBlazor/Templates/commit/62e13c61058b419b8957f7d19f38c69a70ef50e6
 StaticWebAssetsLoader.UseStaticWebAssets(builder.Environment, builder.Configuration);

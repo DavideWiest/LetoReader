@@ -9,6 +9,7 @@ using Reader.Data.Product;
 using Reader.Data.Reading;
 using Reader.Data.Storage;
 using Reader.Modules.Logging;
+using Reader.Modules; // Added for AIService
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Reader.Modules.Reading;
@@ -25,11 +26,14 @@ public class StateManager
     public string CurrentText { get => _currentText; set => _currentText = value.Trim(); }
     private SiteInteraction siteInteraction;
     private Func<Task> TextHasChanged;
-    public StateManager(ILocalStorageService localStorage, SiteInteraction site, Func<Task> updateFieldsFunc)
+    private readonly AIService _aiService; // Added AIService field
+
+    public StateManager(ILocalStorageService localStorage, SiteInteraction site, Func<Task> updateFieldsFunc, AIService aiService) // Added AIService parameter
     {
         this.localStorage = localStorage;
         siteInteraction = site;
         TextHasChanged = updateFieldsFunc;
+        _aiService = aiService; // Assign AIService
     }
 
     public async Task SaveStates()
@@ -64,6 +68,35 @@ public class StateManager
         await Log.Information("ReaderContext: AddState");
 
         state.Title = GetUniqueTitle(state.Title);
+
+        // AI Service Integration
+        if (_aiService != null)
+        {
+            try
+            {
+                var aiResult = await _aiService.GetAnalysisAsync(content);
+                if (aiResult != null)
+                {
+                    state.AISummary = aiResult.Summary;
+                    state.AIKeywords = aiResult.Keywords != null ? string.Join(", ", aiResult.Keywords) : null;
+                    await Log.Information($"ReaderContext: AI analysis complete for '{state.Title}'. Summary and Keywords populated.");
+                }
+                else
+                {
+                    await Log.Information($"ReaderContext: AI analysis skipped or returned no result for '{state.Title}'.");
+                }
+            }
+            catch (Exception ex)
+            {
+                await Log.Error($"ReaderContext: Error during AI analysis for '{state.Title}'. AISummary and AIKeywords will not be populated.", ex.Message, ex.StackTrace);
+                // Optionally, decide if you want to re-throw or handle specific AI exceptions differently
+            }
+        }
+        else
+        {
+            await Log.Warning("ReaderContext: AIService not available, skipping AI analysis for new state.");
+        }
+        // End AI Service Integration
 
         ReaderStates.Add(state);
         ReaderStates = ReaderStates.OrderByDescending(x => x.LastRead).ToList();

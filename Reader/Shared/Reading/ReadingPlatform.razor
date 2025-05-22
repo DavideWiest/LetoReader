@@ -20,6 +20,7 @@
 @using Newtonsoft.Json.Linq
 @using System.Text
 @using Toolbelt.Blazor.HotKeys2
+@using System.Linq // Added for AIKeywords processing
 
 @inject IJSRuntime JSRuntime
 @inject Constants constants
@@ -34,8 +35,33 @@
     <PageTitle>@ReaderContext.StateManager.CurrentState.Title - @Constants.ProjectName</PageTitle>
 }
 
-
 <div class="@(ShowSavedStates ? "mb-24" : "mb-6")">
+
+    @if (ReaderContext?.StateManager?.CurrentState != null)
+    {
+        <MudCard Class="mb-4 pa-4" Elevation="2">
+            @if (!string.IsNullOrWhiteSpace(ReaderContext.StateManager.CurrentState.AISummary))
+            {
+                <MudText Typo="Typo.H6" GutterBottom="true">AI Summary</MudText>
+                <MudText Typo="Typo.Body1" Class="mb-4">@ReaderContext.StateManager.CurrentState.AISummary</MudText>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(ReaderContext.StateManager.CurrentState.AIKeywords))
+            {
+                <MudText Typo="Typo.H6" GutterBottom="true" Class="@(!string.IsNullOrWhiteSpace(ReaderContext.StateManager.CurrentState.AISummary) ? "mt-4" : "")">AI Keywords</MudText>
+                <MudChipSet>
+                    @foreach (var keyword in ReaderContext.StateManager.CurrentState.AIKeywords.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(k => k.Trim()))
+                    {
+                        if (!string.IsNullOrWhiteSpace(keyword)) // Ensure chip is not created for empty/whitespace string after split/trim
+                        {
+                            <MudChip Text="@keyword" Variant="Variant.Text" Color="Color.Primary" />
+                        }
+                    }
+                </MudChipSet>
+            }
+        </MudCard>
+    }
+
     <ReaderView ReaderContext="ReaderContext" ShowEditFields="ShowEditFields" CompactVersion="CompactVersion" />
 </div>
 
