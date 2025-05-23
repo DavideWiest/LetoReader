@@ -36,8 +36,11 @@ public enum Font
 {
     Inter,
     InterTight,
+    Lato, // New
     Merriweather,
-    Poppins,
     OpenSans,
+    Poppins,
     RobotoCondensed,
+    RobotoSlab, // New
+    AtkinsonHyperlegible // New
 }

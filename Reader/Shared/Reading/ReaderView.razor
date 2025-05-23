@@ -20,6 +20,7 @@
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject HotKeys HotKeys 
+@inject ThemeService ThemeService // Added ThemeService
 
 
 <div>
@@ -66,19 +67,19 @@
         </div>
     }
 </div>
-<div id="reader-frontpagesection" class="flex justify-center align-center flex-col transition-transform duratin-500 ease-in-out">
+<div id="reader-frontpagesection" class="flex justify-center align-center flex-col transition-transform duratin-500 ease-in-out" style="@readerSectionStyle">
 
-    <div class="@(CompactVersion ? "py-16" : "py-32") my-6 md:my-12 flex justify-center" style="font-size: @(ReaderContext.ConfigManager.FrontTextSize)px; overflow-y: hidden;">
+    <div class="@(CompactVersion ? "py-16" : "py-32") my-6 md:my-12 flex justify-center" style="font-size: @(ReaderContext.ConfigManager.FrontTextSize)px; overflow-y: hidden; background-color: var(--reader-bg-color);">
         <div class="">
             <span style="font-family: '@(ReaderContext.ConfigManager.FrontFont)' !important; font-weight: @(ReaderContext.ConfigManager.FrontFontWeight) !important;">
-                <span class="text-neutral-@(1000-ReaderContext.ConfigManager.FrontPeripheralWordsBrightness)" style="position: absolute; transform:translateX(-100%); white-space: nowrap;">
+                <span style="color: var(--reader-peripheral-text-color); position: absolute; transform:translateX(-100%); white-space: nowrap;">
                     @(ReaderContext.Manager.GetTextPiecesLookBehind())
                     <span class="width: @(ReaderContext.ConfigManager.FrontTextSize)px; display: inline-block"></span>
                 </span>
-                <span class="text-white">
-                    @(ReaderContext.Manager.GetCurrentTextPiece().Item1)<span style="color: @(ReaderContext.ConfigManager.FrontMiddleCharHighlightingColor);">@(ReaderContext.Manager.GetCurrentTextPiece().Item2)</span>@(ReaderContext.Manager.GetCurrentTextPiece().Item3)
+                <span style="color: var(--reader-text-color);">
+                    @(ReaderContext.Manager.GetCurrentTextPiece().Item1)<span style="color: var(--reader-middle-char-highlight-color);">@(ReaderContext.Manager.GetCurrentTextPiece().Item2)</span>@(ReaderContext.Manager.GetCurrentTextPiece().Item3)
                 </span>
-                <span class="text-neutral-@(1000-ReaderContext.ConfigManager.FrontPeripheralWordsBrightness)" style="position: absolute; white-space: nowrap;">
+                <span style="color: var(--reader-peripheral-text-color); position: absolute; white-space: nowrap;">
                     <span class="width: @(ReaderContext.ConfigManager.FrontTextSize)px; display: inline-block"></span>
                     @(ReaderContext.Manager.GetTextPiecesLookAhead())
                 </span>
@@ -149,9 +150,10 @@
                        T="string"
                        @bind-Value="ReaderContext.ConfigManager.FrontFont">
 
-                @foreach (var type in Enum.GetValues(typeof(Font)))
+                @foreach (var fontName in ReaderContext.ConfigManager.FontOptions)
                 {
-                    <MudSelectItem Value="@type.ToString()" />
+                    <MudSelectItem Value="@fontName">@fontName</MudSelectItem> 
+                    @* Display fontName as the text of the item as well *@
                 }
             </MudSelect>
             <MudSlider Color="Color.Tertiary" Class="my-2 md:my-4" @bind-Value="@ReaderContext.ConfigManager.FrontFontWeight" Min="200" Max="800" Step="100">Text weight: @(ReaderContext.ConfigManager.FrontFontWeight)</MudSlider>
@@ -189,12 +191,26 @@
     bool FocusModeOn = false;
 
     private HotKeysContext? _hotKeysContext;
+    private string readerSectionStyle = ""; // For theme CSS variables
+
+    protected override void OnInitialized() // Changed from OnAfterRender for theme initialization
+    {
+        base.OnInitialized(); // Good practice if inheriting from a class that has OnInitialized
+        ThemeService.OnThemeChanged += HandleThemeChanged;
+        ApplyThemeStyles(); // Apply initial theme
+        
+        // HotKeys setup moved from OnAfterRender to OnInitialized to ensure context is available earlier if needed
+        // and to consolidate initialization logic. If HotKeys truly depends on JS interop after first render,
+        // parts of it might need to remain in OnAfterRender, but subscription can happen here.
+    }
 
     protected override void OnAfterRender(bool firstRender)
     {
         if (firstRender)
         {
-            _hotKeysContext = this.HotKeys.CreateContext();
+            // Initialize HotKeys context here if it strictly depends on JS available only after first render
+            // For now, assuming it can be created in OnInitialized or its first use is guarded.
+             _hotKeysContext = this.HotKeys.CreateContext();
             _hotKeysContext.Add(ModCode.None, Code.Space, (Action)(async () => { await ReaderContext.Manager.HandleStartStop(); await InvokeAsync(() => StateHasChanged()); }));
             _hotKeysContext.Add(ModCode.None, Code.ArrowLeft, (Action)(async () => { ReaderContext.Manager.HandleNavBefore(); await InvokeAsync(() => StateHasChanged()); }));
             _hotKeysContext.Add(ModCode.None, Code.ArrowRight, ReaderContext.Manager.HandleNavNext);
@@ -202,7 +218,22 @@
             _hotKeysContext.Add(ModCode.Ctrl, Code.S, ToggleConfigPanelOpen);
             _hotKeysContext.Add(ModCode.Ctrl|ModCode.Shift, Code.E, ToggleTextPanelOpen);
         }
-        ReaderContext.SetStateFields();
+        ReaderContext.SetStateFields(); // This might be better in OnParametersSet or if ReaderContext changes
+    }
+    
+    private void HandleThemeChanged()
+    {
+        ApplyThemeStyles();
+    }
+
+    private void ApplyThemeStyles()
+    {
+        var theme = ThemeService.CurrentTheme;
+        readerSectionStyle = $"--reader-bg-color: {theme.ReaderBackgroundColor}; " +
+                             $"--reader-text-color: {theme.ReaderTextColor}; " +
+                             $"--reader-peripheral-text-color: {theme.ReaderPeripheralTextColor}; " +
+                             $"--reader-middle-char-highlight-color: {theme.ReaderMiddleCharHighlightColor};";
+        InvokeAsync(StateHasChanged);
     }
 
     private DialogOptions dialogOptions = new() { CloseButton = true, ClassBackground = "blurry" };
@@ -251,7 +282,8 @@
 
     public void Dispose()
     {
-        _hotKeysContext?.Dispose();
+        ThemeService.OnThemeChanged -= HandleThemeChanged;
+        _hotKeysContext?.Dispose(); // Existing dispose logic
     }
 
 }
