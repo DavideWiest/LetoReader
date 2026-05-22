@@ -1,0 +1,71 @@
+@namespace Reader.Shared.Product
+
+@using MudBlazor
+@using Reader.Data.Reading
+@using Reader.Modules.Reading
+
+<MudDialog IsVisible="ConfigPanelOpen" IsVisibleChanged="ConfigPanelOpenChanged" Options="DialogOptions" Class="rounded-lg shadow-xl !bg-bgcol">
+    <DialogContent>
+        <div class="m-4 md:m-12" style="width: min(30rem, 90vw);">
+            <div class="flex justify-between items-center mb-4">
+                <p class="text-xl font-semibold">
+                    Configuration
+                </p>
+            </div>
+
+            <MudSlider Color="Color.Tertiary" Class="my-2 md:my-4" Value="@ReaderContext.ConfigManager.FrontReadingSpeed" ValueChanged="SetReadingSpeed" T="int" Min="1" Max="2000" Step="10">
+                Reading Speed: <EditableNumber Value="@ReaderContext.ConfigManager.FrontReadingSpeed" Max="2000" ValueChanged="SetReadingSpeed" />
+            </MudSlider>
+            <MudSlider Color="Color.Tertiary" Class="my-2 md:my-4" Value="@ReaderContext.ConfigManager.FrontPeripheralCharsCount" ValueChanged="SetPeripheralCharsCount" T="int" Min="0" Max="40" Step="1">
+                Peripheral words character limit: <EditableNumber Value="@ReaderContext.ConfigManager.FrontPeripheralCharsCount" Max="40" ValueChanged="SetPeripheralCharsCount" />
+            </MudSlider>
+            <MudSlider Color="Color.Tertiary" Class="my-2 md:my-4" Value="@ReaderContext.ConfigManager.FrontWordNavCount" ValueChanged="SetWordNavCount" T="int" Min="2" Max="40" Step="1">
+                Word navigation count: <EditableNumber Value="@ReaderContext.ConfigManager.FrontWordNavCount" Max="40" ValueChanged="SetWordNavCount" />
+            </MudSlider>
+            <MudSlider Color="Color.Tertiary" Class="my-2 md:my-4" Value="@ReaderContext.ConfigManager.FrontTextSize" ValueChanged="SetTextSize" T="int" Min="6" Max="50" Step="1">
+                Text size: <EditableNumber Value="@ReaderContext.ConfigManager.FrontTextSize" Max="50" ValueChanged="SetTextSize" />
+            </MudSlider>
+            <MudSelect Color="Color.Tertiary" Class="mud-select-table" Label="Font"
+                       T="string"
+                       @bind-Value="ReaderContext.ConfigManager.FrontFont">
+
+                @foreach (var type in Enum.GetValues(typeof(Font)))
+                {
+                    <MudSelectItem Value="@type.ToString()" />
+                }
+            </MudSelect>
+            <MudSlider Color="Color.Tertiary" Class="my-2 md:my-4" Value="@ReaderContext.ConfigManager.FrontFontWeight" ValueChanged="SetFontWeight" T="int" Min="200" Max="800" Step="100">
+                Text weight: <EditableNumber Value="@ReaderContext.ConfigManager.FrontFontWeight" Max="800" ValueChanged="SetFontWeight" />
+            </MudSlider>
+            <MudSlider Color="Color.Tertiary" Class="my-2 md:my-4" Value="@ReaderContext.ConfigManager.FrontPeripheralWordsBrightness" ValueChanged="SetPeripheralWordsBrightness" T="int" Min="100" Max="900" Step="100">
+                Peripheral words brightness: <EditableNumber Value="@ReaderContext.ConfigManager.FrontPeripheralWordsBrightness" Max="900" ValueChanged="SetPeripheralWordsBrightness" />
+            </MudSlider>
+            <MudColorPicker Class="my-2 md:my-4" T="string" @bind-Text="@ReaderContext.ConfigManager.FrontMiddleCharHighlightingColor" Label="Middle character highlighting color" ColorPickerView="ColorPickerView.Spectrum" DisableAlpha="true" DisablePreview="true" />
+            <MudSwitch Color="Color.Tertiary" Class="my-2 md:my-4" @bind-Value="@ReaderContext.ConfigManager.FrontRightToLeft" Label="Right to left" />
+            <p class="my-2 md:my-4">
+                'Character limit per word' may change the reading position. Do not update it while reading.
+            </p>
+        </div>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [Parameter, EditorRequired]
+    public ReaderContext ReaderContext { get; set; } = default!;
+
+    [Parameter]
+    public bool ConfigPanelOpen { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> ConfigPanelOpenChanged { get; set; }
+
+    [Parameter, EditorRequired]
+    public DialogOptions DialogOptions { get; set; } = default!;
+
+    private void SetReadingSpeed(int value) => ReaderContext.ConfigManager.FrontReadingSpeed = value;
+    private void SetPeripheralCharsCount(int value) => ReaderContext.ConfigManager.FrontPeripheralCharsCount = value;
+    private void SetWordNavCount(int value) => ReaderContext.ConfigManager.FrontWordNavCount = value;
+    private void SetTextSize(int value) => ReaderContext.ConfigManager.FrontTextSize = value;
+    private void SetFontWeight(int value) => ReaderContext.ConfigManager.FrontFontWeight = value;
+    private void SetPeripheralWordsBrightness(int value) => ReaderContext.ConfigManager.FrontPeripheralWordsBrightness = value;
+}
