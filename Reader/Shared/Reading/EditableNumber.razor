@@ -1,0 +1,78 @@
+@namespace Reader.Shared.Product
+
+@if (IsEditing)
+{
+    <input class="inline-block w-16 rounded bg-neutral-900 px-2 py-1 text-center text-neutral-100 outline outline-1 outline-neutral-700"
+           value="@EditValue"
+           inputmode="numeric"
+           pattern="[0-9]*"
+           @oninput="HandleInput"
+           @onblur="Commit"
+           @onkeydown="HandleKeyDown" />
+}
+else
+{
+    <span class="@Class" title="Double-click to edit" @ondblclick="StartEditing">@Value</span>
+}
+
+@code {
+    [Parameter]
+    public int Value { get; set; }
+
+    [Parameter]
+    public EventCallback<int> ValueChanged { get; set; }
+
+    [Parameter]
+    public int Max { get; set; } = int.MaxValue;
+
+    [Parameter]
+    public string Class { get; set; } = string.Empty;
+
+    private bool IsEditing { get; set; }
+    private string EditValue { get; set; } = string.Empty;
+
+    private void StartEditing()
+    {
+        EditValue = Value.ToString();
+        IsEditing = true;
+    }
+
+    private void HandleInput(ChangeEventArgs e)
+    {
+        EditValue = new string((e.Value?.ToString() ?? string.Empty).Where(char.IsDigit).ToArray());
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await Commit();
+        }
+        else if (e.Key == "Escape")
+        {
+            IsEditing = false;
+            EditValue = Value.ToString();
+        }
+    }
+
+    private async Task Commit()
+    {
+        IsEditing = false;
+
+        if (!int.TryParse(EditValue, out var parsed))
+        {
+            EditValue = Value.ToString();
+            return;
+        }
+
+        var safeMax = Math.Max(1, Max);
+        var nextValue = Math.Min(safeMax, Math.Max(1, parsed));
+
+        if (nextValue != Value)
+        {
+            await ValueChanged.InvokeAsync(nextValue);
+        }
+
+        EditValue = nextValue.ToString();
+    }
+}

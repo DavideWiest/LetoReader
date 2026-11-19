@@ -1,0 +1,29 @@
+@namespace Reader.Shared.Product
+
+@using Reader.Modules.Reading
+
+<div class="@(CompactVersion ? "py-16" : "py-32") my-6 md:my-12 flex justify-center" style="font-size: @(ReaderContext.ConfigManager.FrontTextSize)px; overflow-y: hidden;">
+    <div>
+        <span style="font-family: '@(ReaderContext.ConfigManager.FrontFont)' !important; font-weight: @(ReaderContext.ConfigManager.FrontFontWeight) !important;">
+            <span class="text-neutral-@(1000-ReaderContext.ConfigManager.FrontPeripheralWordsBrightness)" style="position: absolute; transform:translateX(-100%); white-space: nowrap;">
+                @(ReaderContext.Manager.GetTextPiecesLookBehind())
+                <span class="width: @(ReaderContext.ConfigManager.FrontTextSize)px; display: inline-block"></span>
+            </span>
+            <span class="text-white">
+                @(ReaderContext.Manager.GetCurrentTextPiece().Item1)<span style="color: @(ReaderContext.ConfigManager.FrontMiddleCharHighlightingColor);">@(ReaderContext.Manager.GetCurrentTextPiece().Item2)</span>@(ReaderContext.Manager.GetCurrentTextPiece().Item3)
+            </span>
+            <span class="text-neutral-@(1000-ReaderContext.ConfigManager.FrontPeripheralWordsBrightness)" style="position: absolute; white-space: nowrap;">
+                <span class="width: @(ReaderContext.ConfigManager.FrontTextSize)px; display: inline-block"></span>
+                @(ReaderContext.Manager.GetTextPiecesLookAhead())
+            </span>
+        </span>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public ReaderContext ReaderContext { get; set; } = default!;
+
+    [Parameter]
+    public bool CompactVersion { get; set; }
+}

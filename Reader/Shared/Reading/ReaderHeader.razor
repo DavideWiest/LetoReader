@@ -1,0 +1,60 @@
+@namespace Reader.Shared.Product
+
+@using MudBlazor
+@using Reader.Data.Storage
+@using Reader.Modules.Reading
+
+<div>
+    @if (ShowEditFields)
+    {
+        <div class="w-full flex justify-between items-center">
+            <h1 class="text-lg text-b600 text-neutral-300" style="font-family: '@(ReaderContext.ConfigManager.FrontFont)' !important;">
+                @ReaderContext.StateManager.CurrentState.Title
+            </h1>
+            <div>
+                <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="ToggleTextPanelOpen" Class="!py-3 !px-4 !pr-5 hover:!bg-neutral-900 centered-button-icon">
+                    <MudIcon Icon="@Icons.Material.Outlined.EditNote"></MudIcon> Edit
+                </MudButton>
+                <MudDialog IsVisible="EditTextPanelOpen" IsVisibleChanged="EditTextPanelOpenChanged" Options="DialogOptions" Class="rounded-lg shadow-xl !bg-bgcol">
+                    <DialogContent>
+                        <div class="m-4 md:m-6" style="width: min(30rem, 90vw);">
+                            <div class="flex justify-between items-center mb-4">
+                                <p class="text-xl font-semibold">
+                                    Edit this text
+                                </p>
+                            </div>
+                            <div class="flex my-5">
+                                <MudTextField @bind-Text="ReaderContext.StateTitleField" T="string" Id="reader-fontpagesection-titlefield" MaxLength=150 Label="Title" Variant="Variant.Outlined" ValueChanged="ReaderContext.HandleTitleChanged" Lines="1" Style="width: 100%;" />
+                            </div>
+                            <MudTextField @bind-Text="ReaderContext.StateTextField" Disabled="@(ReaderContext.StateManager.CurrentText.Length >= ProductConstants.MaxInputLength)" T="string" Id="reader-fontpagesection-textfield" Label="Text" Variant="Variant.Outlined" ValueChanged="ReaderContext.HandleTextChanged" Lines="10" Style="width: 100%;" />
+                            <p class="text-neutral-400 text-sm mt-4">
+                                Configuration, text and reading state are saved automatically and locally in your browser once you de-focus the text field.
+                                Titles must be unique.
+                            </p>
+                        </div>
+                    </DialogContent>
+                </MudDialog>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public ReaderContext ReaderContext { get; set; } = default!;
+
+    [Parameter]
+    public bool ShowEditFields { get; set; } = true;
+
+    [Parameter]
+    public bool EditTextPanelOpen { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> EditTextPanelOpenChanged { get; set; }
+
+    [Parameter]
+    public EventCallback ToggleTextPanelOpen { get; set; }
+
+    [Parameter, EditorRequired]
+    public DialogOptions DialogOptions { get; set; } = default!;
+}

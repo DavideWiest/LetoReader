@@ -1,0 +1,55 @@
+@namespace Reader.Shared.Product
+
+@using MudBlazor
+@using Reader.Modules
+@using Reader.Modules.Reading
+
+<div class="mb-10">
+    <MudSlider Value="@Position"
+               ValueChanged="HandleSliderChanged"
+               T="int"
+               Min="0"
+               Max="@MaxSliderPosition"
+               Step="1"
+               Class="text-neutral-500 text-sm"
+               Color="Color.Tertiary">
+        <div class="flex justify-between">
+            <div>
+                @ProgressPercent%
+                <span class="inline-block mx-2">
+                    <EditableNumber Value="@DisplayPosition" Max="@TextPiecesCount" ValueChanged="HandleDisplayPositionChanged" />
+                    /
+                    @TextPiecesCount
+                </span>
+            </div>
+            <div>
+                <span class="inline-block mx-2">
+                    @(TextHelper.GetDisplayableReadingTime(Position, ReaderContext.Config.ReadingSpeed))
+                    /
+                    @(TextHelper.GetDisplayableReadingTime(MaxSliderPosition, ReaderContext.Config.ReadingSpeed))
+                </span>
+            </div>
+        </div>
+    </MudSlider>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public ReaderContext ReaderContext { get; set; } = default!;
+
+    private int TextPiecesCount => Math.Max(1, ReaderContext.Manager.TextPieces.Count);
+    private int MaxSliderPosition => Math.Max(0, TextPiecesCount - 1);
+    private int Position => Math.Min(MaxSliderPosition, Math.Max(0, ReaderContext.StateManager.CurrentState.PositionInfo.Position));
+    private int DisplayPosition => Position + 1;
+    private int ProgressPercent => DisplayPosition * 100 / TextPiecesCount;
+
+    private void HandleSliderChanged(int value)
+    {
+        ReaderContext.StateManager.CurrentState.PositionInfo.Position = Math.Min(MaxSliderPosition, Math.Max(0, value));
+    }
+
+    private void HandleDisplayPositionChanged(int value)
+    {
+        ReaderContext.StateManager.CurrentState.PositionInfo.Position = Math.Min(MaxSliderPosition, Math.Max(0, value - 1));
+    }
+}
